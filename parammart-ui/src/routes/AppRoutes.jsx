@@ -11,17 +11,25 @@ import ForgotPassword from "../pages/auth/ForgotPassword";
 import ResetPassword from "../pages/auth/ResetPassword";
 
 import Dashboard from "../pages/dashboard/Dashboard";
+import Products from "../pages/products/Products";
 
 import MainLayout from "../layouts/MainLayout";
 import ProtectedRoute from "./ProtectedRoute";
 
 import { useAuth } from "../context/AuthContext";
 
+
 function AppRoutes() {
-  const { isAuthenticated } = useAuth();
+
+  const {
+    isAuthenticated,
+  } = useAuth();
+
 
   return (
+
     <BrowserRouter>
+
       <Routes>
 
         {/* =========================
@@ -32,83 +40,130 @@ function AppRoutes() {
           path="/login"
           element={
             isAuthenticated ? (
-              <Navigate to="/dashboard" replace />
+              <Navigate
+                to="/dashboard"
+                replace
+              />
             ) : (
               <Login />
             )
           }
         />
 
+
         <Route
           path="/register"
           element={
             isAuthenticated ? (
-              <Navigate to="/dashboard" replace />
+              <Navigate
+                to="/dashboard"
+                replace
+              />
             ) : (
               <Register />
             )
           }
         />
 
+
         <Route
           path="/forgot-password"
-          element={<ForgotPassword />}
+          element={
+            <ForgotPassword />
+          }
         />
+
 
         <Route
           path="/reset-password"
-          element={<ResetPassword />}
+          element={
+            <ResetPassword />
+          }
         />
+
 
         {/* =========================
             PROTECTED APPLICATION
         ========================= */}
 
-        <Route element={<ProtectedRoute />}>
+        <Route
+          element={
+            <ProtectedRoute />
+          }
+        >
 
-          <Route element={<MainLayout />}>
+          <Route
+            element={
+              <MainLayout />
+            }
+          >
+
+            {/* DASHBOARD */}
 
             <Route
               path="/dashboard"
-              element={<Dashboard />}
+              element={
+                <Dashboard />
+              }
+            />
+
+
+            {/* PRODUCTS */}
+
+            <Route
+              path="/products"
+              element={
+                <Products />
+              }
             />
 
           </Route>
 
         </Route>
 
+
         {/* =========================
-            DEFAULT ROUTE
+            ROOT
         ========================= */}
 
         <Route
           path="/"
           element={
             <Navigate
-              to={isAuthenticated ? "/dashboard" : "/login"}
+              to={
+                isAuthenticated
+                  ? "/dashboard"
+                  : "/login"
+              }
               replace
             />
           }
         />
 
+
         {/* =========================
-            UNKNOWN ROUTE
+            UNKNOWN ROUTES
         ========================= */}
 
         <Route
           path="*"
           element={
             <Navigate
-              to={isAuthenticated ? "/dashboard" : "/login"}
+              to={
+                isAuthenticated
+                  ? "/dashboard"
+                  : "/login"
+              }
               replace
             />
           }
         />
 
-      
       </Routes>
+
     </BrowserRouter>
   );
 }
+
 
 export default AppRoutes;
