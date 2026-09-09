@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import {
   Alert,
   Box,
+  Button,
   CircularProgress,
   FormControl,
   IconButton,
@@ -10,28 +11,29 @@ import {
   MenuItem,
   Pagination,
   Select,
+  Stack,
   TextField,
   Typography,
 } from "@mui/material";
 
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import ClearRoundedIcon from "@mui/icons-material/ClearRounded";
+import FilterAltRoundedIcon from "@mui/icons-material/FilterAltRounded";
 
 import {
   getProducts,
   searchProducts,
 } from "../../api/productApi";
 
-import ProductGrid from "./ProductGrid";
+import axiosClient from "../../api/axiosClient";
 
+import ProductGrid from "./ProductGrid";
 
 export default function Products() {
 
-  /*
-   * ============================
-   * STATE
-   * ============================
-   */
+  // =========================================================
+  // PRODUCTS
+  // =========================================================
 
   const [products, setProducts] = useState([]);
 
@@ -39,28 +41,104 @@ export default function Products() {
 
   const [error, setError] = useState("");
 
+  // =========================================================
+  // SEARCH
+  // =========================================================
+
   const [keyword, setKeyword] = useState("");
+
+  // =========================================================
+  // FILTERS
+  // =========================================================
+
+  const [categoryId, setCategoryId] = useState("");
+
+  const [brandId, setBrandId] = useState("");
+
+  const [categories, setCategories] = useState([]);
+
+  const [brands, setBrands] = useState([]);
+
+  // =========================================================
+  // PAGINATION
+  // =========================================================
 
   const [page, setPage] = useState(0);
 
   const [size, setSize] = useState(12);
 
+  // =========================================================
+  // SORTING
+  // =========================================================
+
   const [sort, setSort] = useState("id,desc");
+
+  // =========================================================
+  // PAGE INFO
+  // =========================================================
 
   const [totalPages, setTotalPages] = useState(0);
 
   const [totalElements, setTotalElements] = useState(0);
 
 
-  /*
-   * ============================
-   * LOAD PRODUCTS
-   * ============================
-   */
+  // =========================================================
+  // LOAD CATEGORIES + BRANDS
+  // =========================================================
 
   useEffect(() => {
+    loadFilters();
+  }, []);
+
+
+  const loadFilters = async () => {
+
+    try {
+
+      const [categoryResponse, brandResponse] =
+        await Promise.all([
+          axiosClient.get("/categories"),
+          axiosClient.get("/brands"),
+        ]);
+
+      setCategories(
+        categoryResponse.data?.content ||
+        categoryResponse.data ||
+        []
+      );
+
+      setBrands(
+        brandResponse.data?.content ||
+        brandResponse.data ||
+        []
+      );
+
+    } catch (err) {
+
+      console.error(
+        "Failed to load categories/brands:",
+        err
+      );
+
+    }
+  };
+
+
+  // =========================================================
+  // LOAD PRODUCTS
+  // =========================================================
+
+  useEffect(() => {
+
     loadProducts();
-  }, [page, size, sort]);
+
+  }, [
+    page,
+    size,
+    sort,
+    categoryId,
+    brandId,
+  ]);
 
 
   const loadProducts = async () => {
@@ -71,14 +149,7 @@ export default function Products() {
 
       setError("");
 
-
       let data;
-
-
-      /*
-       * If search keyword exists
-       * call search API.
-       */
 
       if (keyword.trim()) {
 
@@ -86,66 +157,48 @@ export default function Products() {
           keyword.trim(),
           page,
           size,
-          sort
+          sort,
+          categoryId,
+          brandId
         );
 
-      }
-
-      /*
-       * Otherwise load all products.
-       */
-
-      else {
+      } else {
 
         data = await getProducts(
           page,
           size,
-          sort
+          sort,
+          categoryId,
+          brandId
         );
-
       }
-
 
       console.log(
         "Products from Spring Boot:",
         data
       );
 
+      setProducts(data.content || []);
 
-      /*
-       * Spring Page response
-       */
-
-      setProducts(
-        data.content || []
-      );
-
-      setTotalPages(
-        data.totalPages || 0
-      );
+      setTotalPages(data.totalPages || 0);
 
       setTotalElements(
         data.totalElements || 0
       );
 
-    }
-
-    catch (err) {
+    } catch (err) {
 
       console.error(
         "Failed to load products:",
         err
       );
 
-
       setError(
         err.response?.data?.message ||
         "Unable to load products. Please try again."
       );
 
-    }
-
-    finally {
+    } finally {
 
       setLoading(false);
 
@@ -153,21 +206,13 @@ export default function Products() {
   };
 
 
-  /*
-   * ============================
-   * SEARCH
-   * ============================
-   */
+  // =========================================================
+  // SEARCH
+  // =========================================================
 
   const handleSearch = async () => {
 
-    /*
-     * Always start search
-     * from first page.
-     */
-
     setPage(0);
-
 
     try {
 
@@ -175,91 +220,53 @@ export default function Products() {
 
       setError("");
 
+      const searchText = keyword.trim();
 
-      const searchText =
-        keyword.trim();
-
-
-      /*
-       * Empty search
-       * means load all products.
-       */
+      let data;
 
       if (!searchText) {
 
-        const data = await getProducts(
+        data = await getProducts(
           0,
           size,
-          sort
+          sort,
+          categoryId,
+          brandId
         );
 
+      } else {
 
-        setProducts(
-          data.content || []
-        );
-
-        setTotalPages(
-          data.totalPages || 0
-        );
-
-        setTotalElements(
-          data.totalElements || 0
-        );
-
-
-        return;
-      }
-
-
-      /*
-       * Search backend
-       */
-
-      const data =
-        await searchProducts(
+        data = await searchProducts(
           searchText,
           0,
           size,
-          sort
+          sort,
+          categoryId,
+          brandId
         );
+      }
 
+      setProducts(data.content || []);
 
-      console.log(
-        "Search results:",
-        data
-      );
-
-
-      setProducts(
-        data.content || []
-      );
-
-      setTotalPages(
-        data.totalPages || 0
-      );
+      setTotalPages(data.totalPages || 0);
 
       setTotalElements(
         data.totalElements || 0
       );
 
-    }
-
-    catch (err) {
+    } catch (err) {
 
       console.error(
         "Product search failed:",
         err
       );
 
-
       setError(
         err.response?.data?.message ||
-        "Unable to search products. Please try again."
+        "Unable to search products."
       );
 
-    }
-
-    finally {
+    } finally {
 
       setLoading(false);
 
@@ -267,86 +274,79 @@ export default function Products() {
   };
 
 
-  /*
-   * ============================
-   * CLEAR SEARCH
-   * ============================
-   */
+  // =========================================================
+  // CLEAR SEARCH
+  // =========================================================
 
-  const handleClearSearch = async () => {
+  const handleClearSearch = () => {
 
     setKeyword("");
 
     setPage(0);
 
-
-    try {
-
-      setLoading(true);
-
-      setError("");
-
-
-      const data = await getProducts(
-        0,
-        size,
-        sort
-      );
-
-
-      setProducts(
-        data.content || []
-      );
-
-      setTotalPages(
-        data.totalPages || 0
-      );
-
-      setTotalElements(
-        data.totalElements || 0
-      );
-
-    }
-
-    catch (err) {
-
-      console.error(
-        "Failed to reload products:",
-        err
-      );
-
-
-      setError(
-        "Unable to reload products."
-      );
-
-    }
-
-    finally {
-
-      setLoading(false);
-
-    }
   };
 
 
-  /*
-   * ============================
-   * PAGINATION
-   * ============================
-   */
+  // =========================================================
+  // CATEGORY CHANGE
+  // =========================================================
+
+  const handleCategoryChange = (event) => {
+
+    setCategoryId(event.target.value);
+
+    setPage(0);
+
+  };
+
+
+  // =========================================================
+  // BRAND CHANGE
+  // =========================================================
+
+  const handleBrandChange = (event) => {
+
+    setBrandId(event.target.value);
+
+    setPage(0);
+
+  };
+
+
+  // =========================================================
+  // SORT CHANGE
+  // =========================================================
+
+  const handleSortChange = (event) => {
+
+    setSort(event.target.value);
+
+    setPage(0);
+
+  };
+
+
+  // =========================================================
+  // PAGE SIZE
+  // =========================================================
+
+  const handleSizeChange = (event) => {
+
+    setSize(Number(event.target.value));
+
+    setPage(0);
+
+  };
+
+
+  // =========================================================
+  // PAGE CHANGE
+  // =========================================================
 
   const handlePageChange = (
     _event,
     newPage
   ) => {
-
-    /*
-     * MUI pagination starts
-     * from 1.
-     *
-     * Spring starts from 0.
-     */
 
     setPage(newPage - 1);
 
@@ -354,76 +354,48 @@ export default function Products() {
       top: 0,
       behavior: "smooth",
     });
+
   };
 
 
-  /*
-   * ============================
-   * PAGE SIZE
-   * ============================
-   */
+  // =========================================================
+  // CLEAR FILTERS
+  // =========================================================
 
-  const handleSizeChange = (
-    event
-  ) => {
+  const handleClearFilters = () => {
 
-    setSize(
-      Number(event.target.value)
-    );
+    setCategoryId("");
+
+    setBrandId("");
+
+    setKeyword("");
 
     setPage(0);
+
   };
 
 
-  /*
-   * ============================
-   * SORT
-   * ============================
-   */
+  // =========================================================
+  // LOADING
+  // =========================================================
 
-  const handleSortChange = (
-    event
-  ) => {
-
-    setSort(
-      event.target.value
-    );
-
-    setPage(0);
-  };
-
-
-  /*
-   * ============================
-   * LOADING
-   * ============================
-   */
-
-  if (loading) {
+  if (loading && products.length === 0) {
 
     return (
       <Box
         sx={{
           minHeight: "100%",
-
           display: "flex",
-
           justifyContent: "center",
-
           alignItems: "center",
         }}
       >
         <CircularProgress />
       </Box>
     );
+
   }
 
-
-  /*
-   * ============================
-   * PAGE
-   * ============================
-   */
 
   return (
 
@@ -434,83 +406,61 @@ export default function Products() {
           sm: 3,
           md: 4,
         },
-
         maxWidth: "1800px",
-
         mx: "auto",
       }}
     >
 
-      {/* =========================
-          PAGE HEADER
-      ========================= */}
+      {/* =====================================================
+          HEADER
+      ====================================================== */}
 
-      <Box
-        sx={{
-          mb: 3,
-        }}
-      >
+      <Box sx={{ mb: 3 }}>
 
         <Typography
           variant="h4"
           fontWeight={900}
-          sx={{
-            mb: 1,
-          }}
+          sx={{ mb: 1 }}
         >
           Products
         </Typography>
-
 
         <Typography
           sx={{
             color: "#64748B",
           }}
         >
-          Browse our complete
-          product collection.
+          Browse our complete product collection.
         </Typography>
 
       </Box>
 
 
-      {/* =========================
-          SEARCH + SORT
-      ========================= */}
+      {/* =====================================================
+          SEARCH
+      ====================================================== */}
 
       <Box
         sx={{
           display: "flex",
-
           gap: 2,
-
           flexWrap: "wrap",
-
           alignItems: "center",
-
-          mb: 3,
+          mb: 2,
         }}
       >
-
-        {/* SEARCH */}
 
         <TextField
           fullWidth
           placeholder="Search products..."
           value={keyword}
           onChange={(event) =>
-            setKeyword(
-              event.target.value
-            )
+            setKeyword(event.target.value)
           }
           onKeyDown={(event) => {
 
-            if (
-              event.key === "Enter"
-            ) {
-
+            if (event.key === "Enter") {
               handleSearch();
-
             }
 
           }}
@@ -523,38 +473,24 @@ export default function Products() {
             },
 
             "& .MuiOutlinedInput-root": {
-
               borderRadius: 3,
-
-              backgroundColor:
-                "#FFFFFF",
-
+              backgroundColor: "#FFFFFF",
             },
           }}
-
           InputProps={{
-
             startAdornment: (
-
-              <InputAdornment
-                position="start"
-              >
+              <InputAdornment position="start">
 
                 <SearchRoundedIcon
                   color="action"
                 />
 
               </InputAdornment>
-
             ),
 
             endAdornment:
-
               keyword && (
-
-                <InputAdornment
-                  position="end"
-                >
+                <InputAdornment position="end">
 
                   <IconButton
                     onClick={
@@ -562,69 +498,162 @@ export default function Products() {
                     }
                     size="small"
                   >
-
                     <ClearRoundedIcon />
-
                   </IconButton>
 
                 </InputAdornment>
-
               ),
           }}
         />
 
-
-        {/* SEARCH BUTTON */}
-
-        <Box
-          component="button"
+        <Button
           onClick={handleSearch}
+          variant="contained"
           sx={{
-            border: "none",
-
-            cursor: "pointer",
-
-            borderRadius: 2.5,
-
             px: 3,
-
-            py: 1.6,
-
+            py: 1.5,
+            borderRadius: 2.5,
+            fontWeight: 700,
+            textTransform: "none",
             background:
               "linear-gradient(135deg,#2563EB,#4F46E5)",
+          }}
+        >
+          Search
+        </Button>
 
-            color: "#FFFFFF",
+      </Box>
 
-            fontSize: "0.95rem",
 
-            fontWeight: 700,
+      {/* =====================================================
+          FILTERS
+      ====================================================== */}
 
-            transition:
-              "all .2s ease",
+      <Box
+        sx={{
+          display: "flex",
+          gap: 2,
+          flexWrap: "wrap",
+          mb: 3,
+          p: 2,
+          borderRadius: 3,
+          backgroundColor: "#FFFFFF",
+          boxShadow:
+            "0 4px 20px rgba(15,23,42,.06)",
+        }}
+      >
 
-            "&:hover": {
-
-              transform:
-                "translateY(-2px)",
-
-              boxShadow:
-                "0 10px 25px rgba(37,99,235,.25)",
-
-            },
-
+        <Stack
+          direction="row"
+          alignItems="center"
+          spacing={1}
+          sx={{
             width: {
               xs: "100%",
               sm: "auto",
             },
           }}
         >
-          Search
-        </Box>
+
+          <FilterAltRoundedIcon
+            color="primary"
+          />
+
+          <Typography
+            fontWeight={800}
+          >
+            Filters
+          </Typography>
+
+        </Stack>
+
+
+        {/* CATEGORY */}
+
+        <FormControl
+          size="small"
+          sx={{
+            minWidth: {
+              xs: "100%",
+              sm: 200,
+            },
+          }}
+        >
+
+          <Select
+            value={categoryId}
+            onChange={handleCategoryChange}
+            displayEmpty
+            sx={{
+              borderRadius: 2.5,
+            }}
+          >
+
+            <MenuItem value="">
+              All Categories
+            </MenuItem>
+
+            {categories.map((category) => (
+
+              <MenuItem
+                key={category.id}
+                value={category.id}
+              >
+                {category.name}
+              </MenuItem>
+
+            ))}
+
+          </Select>
+
+        </FormControl>
+
+
+        {/* BRAND */}
+
+        <FormControl
+          size="small"
+          sx={{
+            minWidth: {
+              xs: "100%",
+              sm: 200,
+            },
+          }}
+        >
+
+          <Select
+            value={brandId}
+            onChange={handleBrandChange}
+            displayEmpty
+            sx={{
+              borderRadius: 2.5,
+            }}
+          >
+
+            <MenuItem value="">
+              All Brands
+            </MenuItem>
+
+            {brands.map((brand) => (
+
+              <MenuItem
+                key={brand.id}
+                value={brand.id}
+              >
+                {brand.name}
+              </MenuItem>
+
+            ))}
+
+          </Select>
+
+        </FormControl>
 
 
         {/* SORT */}
 
         <FormControl
+          size="small"
           sx={{
             minWidth: {
               xs: "100%",
@@ -635,14 +664,9 @@ export default function Products() {
 
           <Select
             value={sort}
-            onChange={
-              handleSortChange
-            }
+            onChange={handleSortChange}
             sx={{
-              borderRadius: 3,
-
-              backgroundColor:
-                "#FFFFFF",
+              borderRadius: 2.5,
             }}
           >
 
@@ -670,20 +694,39 @@ export default function Products() {
 
         </FormControl>
 
+
+        {/* CLEAR FILTERS */}
+
+        {(categoryId ||
+          brandId ||
+          keyword) && (
+
+          <Button
+            onClick={handleClearFilters}
+            variant="outlined"
+            sx={{
+              borderRadius: 2.5,
+              fontWeight: 700,
+              textTransform: "none",
+            }}
+          >
+            Clear Filters
+          </Button>
+
+        )}
+
       </Box>
 
 
-      {/* =========================
+      {/* =====================================================
           ERROR
-      ========================= */}
+      ====================================================== */}
 
       {error && (
 
         <Alert
           severity="error"
-          sx={{
-            mb: 3,
-          }}
+          sx={{ mb: 3 }}
         >
           {error}
         </Alert>
@@ -691,32 +734,24 @@ export default function Products() {
       )}
 
 
-      {/* =========================
-          RESULT INFORMATION
-      ========================= */}
+      {/* =====================================================
+          PRODUCT COUNT + PAGE SIZE
+      ====================================================== */}
 
       <Box
         sx={{
           display: "flex",
-
-          justifyContent:
-            "space-between",
-
+          justifyContent: "space-between",
           alignItems: "center",
-
           gap: 2,
-
           flexWrap: "wrap",
-
           mb: 3,
         }}
       >
 
         <Typography
           sx={{
-            color:
-              "text.secondary",
-
+            color: "text.secondary",
             fontWeight: 600,
           }}
         >
@@ -724,20 +759,13 @@ export default function Products() {
         </Typography>
 
 
-        {/* PAGE SIZE */}
-
-        <FormControl
-          size="small"
-        >
+        <FormControl size="small">
 
           <Select
             value={size}
-            onChange={
-              handleSizeChange
-            }
+            onChange={handleSizeChange}
             sx={{
               minWidth: 120,
-
               borderRadius: 2,
             }}
           >
@@ -765,43 +793,33 @@ export default function Products() {
       </Box>
 
 
-      {/* =========================
-          PRODUCT GRID
-      ========================= */}
+      {/* =====================================================
+          PRODUCTS
+      ====================================================== */}
 
-      <ProductGrid
-        products={products}
+      {products.length > 0 ? (
 
-        onAddToCart={(product) => {
+        <ProductGrid
+          products={products}
+          onAddToCart={(product) => {
+            console.log(
+              "Add to cart:",
+              product
+            );
+          }}
+          onView={(product) => {
+            console.log(
+              "View product:",
+              product
+            );
+          }}
+        />
 
-          console.log(
-            "Add to cart:",
-            product
-          );
-
-        }}
-
-        onView={(product) => {
-
-          console.log(
-            "View product:",
-            product
-          );
-
-        }}
-      />
-
-
-      {/* =========================
-          EMPTY STATE
-      ========================= */}
-
-      {products.length === 0 && (
+      ) : (
 
         <Box
           sx={{
             textAlign: "center",
-
             py: 8,
           }}
         >
@@ -815,12 +833,9 @@ export default function Products() {
 
           <Typography
             color="text.secondary"
-            sx={{
-              mt: 1,
-            }}
+            sx={{ mt: 1 }}
           >
-            Try a different
-            search keyword.
+            Try changing your search or filters.
           </Typography>
 
         </Box>
@@ -828,42 +843,29 @@ export default function Products() {
       )}
 
 
-      {/* =========================
+      {/* =====================================================
           PAGINATION
-      ========================= */}
+      ====================================================== */}
 
       {totalPages > 1 && (
 
         <Box
           sx={{
             display: "flex",
-
-            justifyContent:
-              "center",
-
+            justifyContent: "center",
             mt: 5,
-
             pb: 3,
           }}
         >
 
           <Pagination
             count={totalPages}
-
             page={page + 1}
-
-            onChange={
-              handlePageChange
-            }
-
+            onChange={handlePageChange}
             color="primary"
-
             size="large"
-
             showFirstButton
-
             showLastButton
-
           />
 
         </Box>
