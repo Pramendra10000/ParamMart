@@ -7,14 +7,18 @@ const axiosClient = axios.create({
   },
 });
 
-/*
- * Attach JWT automatically to every request.
- */
+// =========================================================
+// REQUEST INTERCEPTOR
+// =========================================================
+// Automatically attach JWT token to every request.
+// =========================================================
+
 axiosClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("parammart_token");
 
     if (token) {
+      config.headers = config.headers || {};
       config.headers.Authorization = `Bearer ${token}`;
     }
 
@@ -23,17 +27,18 @@ axiosClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-/*
- * Centralized API error handling.
- */
+// =========================================================
+// RESPONSE INTERCEPTOR
+// =========================================================
+
 axiosClient.interceptors.response.use(
   (response) => response,
 
   (error) => {
     if (error.response) {
-
       const status = error.response.status;
 
+      // Unauthorized
       if (status === 401) {
         localStorage.removeItem("parammart_token");
       }
@@ -41,6 +46,7 @@ axiosClient.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    // Network / server unavailable
     return Promise.reject(error);
   }
 );
