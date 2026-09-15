@@ -18,6 +18,10 @@ import ProtectedRoute from "./ProtectedRoute";
 
 import { useAuth } from "../context/AuthContext";
 
+import ProductDetails from "../pages/products/ProductDetails";
+
+import Cart from "../pages/cart/Cart";
+
 
 function AppRoutes() {
 
@@ -116,6 +120,15 @@ function AppRoutes() {
                 <Products />
               }
             />
+
+            <Route
+              path="/products/:id"
+              element={
+                <ProductDetails />
+              }
+            />
+
+             <Route path="/cart" element={<Cart />} />
 
           </Route>
 

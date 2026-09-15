@@ -11,8 +11,11 @@ import {
 
 import ProductCard from "../../components/dashboard/ProductCard";
 import { getProducts } from "../../api/productApi";
+import { useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
+
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -56,11 +59,9 @@ export default function Dashboard() {
     // Cart functionality will be implemented next.
   };
 
-  const handleViewProduct = (product) => {
-    console.log("View product:", product);
-
-    // Product details page will be implemented next.
-  };
+const handleViewProduct = (product) => {
+  navigate(`/products/${product.id}`);
+};
 
   return (
     <Box

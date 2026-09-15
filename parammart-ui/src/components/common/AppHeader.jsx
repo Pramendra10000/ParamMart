@@ -25,9 +25,12 @@ import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 
 import { useAuth } from "../../context/AuthContext";
+import { useCart } from "../../context/CartContext";
+
 
 export default function AppHeader({ onMenuClick }) {
-  const { logout } = useAuth();
+ const { logout } = useAuth();
+const { cartItemCount } = useCart();
 
   const [anchorEl, setAnchorEl] = useState(null);
 
@@ -270,11 +273,12 @@ export default function AppHeader({ onMenuClick }) {
           <Tooltip title="Shopping Cart">
             <IconButton>
               <Badge
-                badgeContent={0}
-                color="primary"
-              >
-                <ShoppingCartRoundedIcon />
-              </Badge>
+  badgeContent={cartItemCount}
+  color="primary"
+  invisible={cartItemCount === 0}
+>
+  <ShoppingCartRoundedIcon />
+</Badge>
             </IconButton>
           </Tooltip>
 

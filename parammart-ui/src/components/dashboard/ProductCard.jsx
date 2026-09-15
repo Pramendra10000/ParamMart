@@ -59,10 +59,10 @@ export default function ProductCard({ product, onAddToCart, onView }) {
             "linear-gradient(135deg,#F8FAFC,#EEF2FF)",
         }}
       >
-        {product.imageUrl ? (
+        {product.primaryImageUrl ? (
           <CardMedia
             component="img"
-            image={product.imageUrl}
+            image={product.primaryImageUrl}
             alt={product.name}
             sx={{
               width: "100%",

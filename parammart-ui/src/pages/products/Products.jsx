@@ -15,7 +15,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-
+import { useNavigate } from "react-router-dom";
 import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import ClearRoundedIcon from "@mui/icons-material/ClearRounded";
 import FilterAltRoundedIcon from "@mui/icons-material/FilterAltRounded";
@@ -29,13 +29,14 @@ import {
 
 import ProductGrid from "./ProductGrid";
 
-
 // =========================================================
 // PRODUCTS PAGE
 // =========================================================
 
 export default function Products() {
 
+  const navigate = useNavigate();
+  
   // =======================================================
   // PRODUCT DATA
   // =======================================================
@@ -51,7 +52,11 @@ export default function Products() {
   // SEARCH
   // =======================================================
 
+  // What the user is currently typing
   const [keyword, setKeyword] = useState("");
+
+  // Search text actually applied to backend
+  const [searchKeyword, setSearchKeyword] = useState("");
 
 
   // =======================================================
@@ -94,7 +99,9 @@ export default function Products() {
   // =======================================================
 
   useEffect(() => {
+
     loadFilters();
+
   }, []);
 
 
@@ -115,7 +122,6 @@ export default function Products() {
 
       // ---------------------------------------------------
       // CATEGORIES
-      // Backend returns List<Category>
       // ---------------------------------------------------
 
       const categoryList =
@@ -128,7 +134,6 @@ export default function Products() {
 
       // ---------------------------------------------------
       // BRANDS
-      // Backend returns Page<BrandResponse>
       // ---------------------------------------------------
 
       const brandList =
@@ -172,6 +177,7 @@ export default function Products() {
     sort,
     categoryId,
     brandId,
+    searchKeyword,
   ]);
 
 
@@ -187,13 +193,13 @@ export default function Products() {
 
 
       // ---------------------------------------------------
-      // SEARCH + FILTERS
+      // SEARCH
       // ---------------------------------------------------
 
-      if (keyword.trim()) {
+      if (searchKeyword.trim()) {
 
         data = await searchProducts(
-          keyword.trim(),
+          searchKeyword.trim(),
           page,
           size,
           sort,
@@ -204,7 +210,7 @@ export default function Products() {
       }
 
       // ---------------------------------------------------
-      // NORMAL PRODUCTS + FILTERS
+      // NORMAL PRODUCTS
       // ---------------------------------------------------
 
       else {
@@ -279,103 +285,23 @@ export default function Products() {
   // SEARCH
   // =======================================================
 
-  const handleSearch = async () => {
+  const handleSearch = () => {
 
     const searchText = keyword.trim();
 
     // -----------------------------------------------------
-    // Always start search from first page
+    // Start search from first page
     // -----------------------------------------------------
 
     setPage(0);
 
+    // -----------------------------------------------------
+    // Apply search keyword
+    //
+    // This triggers the single useEffect above.
+    // -----------------------------------------------------
 
-    try {
-
-      setLoading(true);
-
-      setError("");
-
-      let data;
-
-
-      // ---------------------------------------------------
-      // EMPTY SEARCH
-      // ---------------------------------------------------
-
-      if (!searchText) {
-
-        data = await getProducts(
-          0,
-          size,
-          sort,
-          categoryId,
-          brandId
-        );
-
-      }
-
-      // ---------------------------------------------------
-      // SEARCH WITH CURRENT FILTERS
-      // ---------------------------------------------------
-
-      else {
-
-        data = await searchProducts(
-          searchText,
-          0,
-          size,
-          sort,
-          categoryId,
-          brandId
-        );
-
-      }
-
-
-      console.log(
-        "Search results:",
-        data
-      );
-
-
-      setProducts(
-        Array.isArray(data?.content)
-          ? data.content
-          : []
-      );
-
-      setTotalPages(
-        data?.totalPages || 0
-      );
-
-      setTotalElements(
-        data?.totalElements || 0
-      );
-
-    } catch (err) {
-
-      console.error(
-        "Product search failed:",
-        err
-      );
-
-      setProducts([]);
-
-      setTotalPages(0);
-
-      setTotalElements(0);
-
-      setError(
-        err.response?.data?.message ||
-        "Unable to search products. Please try again."
-      );
-
-    } finally {
-
-      setLoading(false);
-
-    }
+    setSearchKeyword(searchText);
   };
 
 
@@ -383,60 +309,14 @@ export default function Products() {
   // CLEAR SEARCH
   // =======================================================
 
-  const handleClearSearch = async () => {
+  const handleClearSearch = () => {
 
     setKeyword("");
 
+    setSearchKeyword("");
+
     setPage(0);
 
-
-    try {
-
-      setLoading(true);
-
-      setError("");
-
-
-      const data = await getProducts(
-        0,
-        size,
-        sort,
-        categoryId,
-        brandId
-      );
-
-
-      setProducts(
-        Array.isArray(data?.content)
-          ? data.content
-          : []
-      );
-
-      setTotalPages(
-        data?.totalPages || 0
-      );
-
-      setTotalElements(
-        data?.totalElements || 0
-      );
-
-    } catch (err) {
-
-      console.error(
-        "Failed to clear search:",
-        err
-      );
-
-      setError(
-        err.response?.data?.message ||
-        "Unable to reload products."
-      );
-
-    } finally {
-
-      setLoading(false);
-
-    }
   };
 
 
@@ -521,9 +401,11 @@ export default function Products() {
   // CLEAR ALL FILTERS
   // =======================================================
 
-  const handleClearFilters = async () => {
+  const handleClearFilters = () => {
 
     setKeyword("");
+
+    setSearchKeyword("");
 
     setCategoryId("");
 
@@ -531,52 +413,6 @@ export default function Products() {
 
     setPage(0);
 
-
-    try {
-
-      setLoading(true);
-
-      setError("");
-
-
-      const data = await getProducts(
-        0,
-        size,
-        sort
-      );
-
-
-      setProducts(
-        Array.isArray(data?.content)
-          ? data.content
-          : []
-      );
-
-      setTotalPages(
-        data?.totalPages || 0
-      );
-
-      setTotalElements(
-        data?.totalElements || 0
-      );
-
-    } catch (err) {
-
-      console.error(
-        "Failed to clear filters:",
-        err
-      );
-
-      setError(
-        err.response?.data?.message ||
-        "Unable to reload products."
-      );
-
-    } finally {
-
-      setLoading(false);
-
-    }
   };
 
 
@@ -1245,14 +1081,9 @@ export default function Products() {
 
             }}
 
-            onView={(product) => {
-
-              console.log(
-                "View product:",
-                product
-              );
-
-            }}
+         onView={(product) => {
+  window.location.href = `/products/${product.id}`;
+}}
 
           />
 
