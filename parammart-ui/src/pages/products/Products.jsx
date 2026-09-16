@@ -20,6 +20,9 @@ import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import ClearRoundedIcon from "@mui/icons-material/ClearRounded";
 import FilterAltRoundedIcon from "@mui/icons-material/FilterAltRounded";
 
+import { useCart } from "../../context/CartContext";
+import { useToast } from "../../context/ToastContext";
+
 import {
   getProducts,
   searchProducts,
@@ -36,7 +39,14 @@ import ProductGrid from "./ProductGrid";
 export default function Products() {
 
   const navigate = useNavigate();
-  
+
+  const { addToCart } = useCart();
+
+  const {
+    showSuccess,
+    showWarning,
+  } = useToast();
+
   // =======================================================
   // PRODUCT DATA
   // =======================================================
@@ -1069,22 +1079,30 @@ export default function Products() {
 
 
           <ProductGrid
-
             products={products}
 
             onAddToCart={(product) => {
+              if (!product || !product.id) {
+                return;
+              }
 
-              console.log(
-                "Add to cart:",
-                product
+              if (!product.active || Number(product.stock) <= 0) {
+                showWarning(
+                  `${product.name} is currently out of stock.`
+                );
+                return;
+              }
+
+              addToCart(product, 1);
+
+              showSuccess(
+                `${product.name} added to cart successfully.`
               );
-
             }}
 
-         onView={(product) => {
-  window.location.href = `/products/${product.id}`;
-}}
-
+            onView={(product) => {
+              navigate(`/products/${product.id}`);
+            }}
           />
 
         </Box>

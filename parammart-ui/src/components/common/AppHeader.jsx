@@ -27,10 +27,14 @@ import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
 import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
 
+import { useNavigate } from "react-router-dom";
+
+
 
 export default function AppHeader({ onMenuClick }) {
- const { logout } = useAuth();
-const { cartItemCount } = useCart();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+  const { cartItemCount } = useCart();
 
   const [anchorEl, setAnchorEl] = useState(null);
 
@@ -271,17 +275,19 @@ const { cartItemCount } = useCart();
           {/* Cart */}
 
           <Tooltip title="Shopping Cart">
-            <IconButton>
+            <IconButton
+              onClick={() => navigate("/cart")}
+              aria-label="Shopping Cart"
+            >
               <Badge
-  badgeContent={cartItemCount}
-  color="primary"
-  invisible={cartItemCount === 0}
->
-  <ShoppingCartRoundedIcon />
-</Badge>
+                badgeContent={cartItemCount}
+                color="primary"
+                invisible={cartItemCount === 0}
+              >
+                <ShoppingCartRoundedIcon />
+              </Badge>
             </IconButton>
           </Tooltip>
-
 
           {/* Account */}
 

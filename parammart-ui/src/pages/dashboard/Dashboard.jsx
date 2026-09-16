@@ -12,13 +12,20 @@ import {
 import ProductCard from "../../components/dashboard/ProductCard";
 import { getProducts } from "../../api/productApi";
 import { useNavigate } from "react-router-dom";
+import { useCart } from "../../context/CartContext";
+import { useToast } from "../../context/ToastContext";
 
 export default function Dashboard() {
+
+
 
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const { addToCart } = useCart();
+  const { showSuccess } = useToast();
 
   useEffect(() => {
     loadProducts();
@@ -54,14 +61,24 @@ export default function Dashboard() {
   };
 
   const handleAddToCart = (product) => {
-    console.log("Add to cart:", product);
+    if (!product || !product.id) {
+      return;
+    }
 
-    // Cart functionality will be implemented next.
+    if (!product.active || Number(product.stock) <= 0) {
+      return;
+    }
+
+    addToCart(product, 1);
+
+    showSuccess(
+      `${product.name} added to cart successfully.`
+    );
   };
 
-const handleViewProduct = (product) => {
-  navigate(`/products/${product.id}`);
-};
+  const handleViewProduct = (product) => {
+    navigate(`/products/${product.id}`);
+  };
 
   return (
     <Box
