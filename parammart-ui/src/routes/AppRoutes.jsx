@@ -12,132 +12,96 @@ import ResetPassword from "../pages/auth/ResetPassword";
 
 import Dashboard from "../pages/dashboard/Dashboard";
 import Products from "../pages/products/Products";
+import ProductDetails from "../pages/products/ProductDetails";
+import Cart from "../pages/cart/Cart";
+import Checkout from "../pages/checkout/Checkout";
 
 import MainLayout from "../layouts/MainLayout";
 import ProtectedRoute from "./ProtectedRoute";
 
 import { useAuth } from "../context/AuthContext";
+import OrderSuccess from "../pages/orders/OrderSuccess";
 
-import ProductDetails from "../pages/products/ProductDetails";
-
-import Cart from "../pages/cart/Cart";
-
+import Orders from "../pages/orders/Orders";
+import OrderDetails from "../pages/orders/OrderDetails";
 
 function AppRoutes() {
-
-  const {
-    isAuthenticated,
-  } = useAuth();
-
+  const { isAuthenticated } = useAuth();
 
   return (
-
     <BrowserRouter>
-
       <Routes>
 
-        {/* =========================
-            PUBLIC AUTH ROUTES
-        ========================= */}
+        {/* ================= AUTH ================= */}
 
         <Route
           path="/login"
           element={
             isAuthenticated ? (
-              <Navigate
-                to="/dashboard"
-                replace
-              />
+              <Navigate to="/dashboard" replace />
             ) : (
               <Login />
             )
           }
         />
 
-
         <Route
           path="/register"
           element={
             isAuthenticated ? (
-              <Navigate
-                to="/dashboard"
-                replace
-              />
+              <Navigate to="/dashboard" replace />
             ) : (
               <Register />
             )
           }
         />
 
-
         <Route
           path="/forgot-password"
-          element={
-            <ForgotPassword />
-          }
+          element={<ForgotPassword />}
         />
-
 
         <Route
           path="/reset-password"
-          element={
-            <ResetPassword />
-          }
+          element={<ResetPassword />}
         />
 
+        {/* ================= PROTECTED ================= */}
 
-        {/* =========================
-            PROTECTED APPLICATION
-        ========================= */}
-
-        <Route
-          element={
-            <ProtectedRoute />
-          }
-        >
-
-          <Route
-            element={
-              <MainLayout />
-            }
-          >
-
-            {/* DASHBOARD */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<MainLayout />}>
 
             <Route
               path="/dashboard"
-              element={
-                <Dashboard />
-              }
+              element={<Dashboard />}
             />
-
-
-            {/* PRODUCTS */}
 
             <Route
               path="/products"
-              element={
-                <Products />
-              }
+              element={<Products />}
             />
 
             <Route
               path="/products/:id"
-              element={
-                <ProductDetails />
-              }
+              element={<ProductDetails />}
             />
 
-             <Route path="/cart" element={<Cart />} />
+            <Route
+              path="/cart"
+              element={<Cart />}
+            />
 
+            <Route
+              path="/checkout"
+              element={<Checkout />}
+            />
+            <Route path="/order-success" element={<OrderSuccess />} />
+            <Route path="/orders" element={<Orders />} />
+            <Route path="/orders/:id" element={<OrderDetails />} />
           </Route>
-
         </Route>
 
-
-        {/* =========================
-            ROOT
-        ========================= */}
+        {/* ================= DEFAULT ================= */}
 
         <Route
           path="/"
@@ -152,11 +116,6 @@ function AppRoutes() {
             />
           }
         />
-
-
-        {/* =========================
-            UNKNOWN ROUTES
-        ========================= */}
 
         <Route
           path="*"
@@ -173,10 +132,8 @@ function AppRoutes() {
         />
 
       </Routes>
-
     </BrowserRouter>
   );
 }
-
 
 export default AppRoutes;

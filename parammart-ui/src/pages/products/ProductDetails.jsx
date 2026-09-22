@@ -23,8 +23,8 @@ import LocalShippingOutlinedIcon from "@mui/icons-material/LocalShippingOutlined
 import VerifiedOutlinedIcon from "@mui/icons-material/VerifiedOutlined";
 import ReplayRoundedIcon from "@mui/icons-material/ReplayRounded";
 
-import { useCart } from "../../context/CartContext";
 import { useToast } from "../../context/ToastContext";
+import { useCart } from "../../context/CartContext";
 
 import {
     getProductById,
@@ -40,9 +40,9 @@ import { useParams } from "react-router-dom";
 export default function ProductDetails() {
     const { id } = useParams();
 
-    const { addToCart } = useCart();
 
-    const { showSuccess } = useToast();
+   const { showSuccess, showError } = useToast();
+const { addToCart } = useCart();
 
     const [product, setProduct] = useState(null);
     const [media, setMedia] = useState([]);
@@ -201,17 +201,55 @@ export default function ProductDetails() {
     // CART / BUY ACTIONS
     // =========================================================
 
-    const handleAddToCart = () => {
-        if (!product || !isInStock) {
-            return;
-        }
+const handleAddToCart = async () => {
+    console.log("=================================");
+    console.log("ADD TO CART BUTTON CLICKED");
+    console.log("Product:", product);
+    console.log("Product ID:", product?.id);
+    console.log("Quantity:", quantity);
+    console.log("In Stock:", isInStock);
+    console.log("=================================");
 
-        addToCart(product, quantity);
+    if (!product || !isInStock) {
+        console.log(
+            "Add to cart stopped: product unavailable or out of stock."
+        );
+        return;
+    }
+
+    try {
+        console.log(
+            "Calling CartContext addToCart..."
+        );
+
+        await addToCart(product, quantity);
+
+        console.log(
+            "Product successfully added to cart."
+        );
 
         showSuccess(
             `${product.name} added to cart successfully.`
         );
-    };
+    } catch (error) {
+        console.error(
+            "ADD TO CART FAILED:",
+            error
+        );
+
+        console.error(
+            "Response:",
+            error?.response
+        );
+
+        const message =
+            error?.response?.data?.message ||
+            error?.message ||
+            "Unable to add product to cart.";
+
+        showError(message);
+    }
+};
 
     const handleBuyNow = () => {
         console.log(
