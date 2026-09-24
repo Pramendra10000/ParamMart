@@ -1,9 +1,5 @@
 import axiosClient from "./axiosClient";
 
-// =========================================================
-// GET PRODUCTS
-// =========================================================
-
 export const getProducts = async (
   page = 0,
   size = 12,
@@ -11,11 +7,7 @@ export const getProducts = async (
   categoryId = "",
   brandId = ""
 ) => {
-  const params = {
-    page,
-    size,
-    sort,
-  };
+  const params = { page, size, sort };
 
   if (categoryId !== "" && categoryId !== null) {
     params.categoryId = categoryId;
@@ -25,31 +17,16 @@ export const getProducts = async (
     params.brandId = brandId;
   }
 
-  const response = await axiosClient.get(
-    "/products",
-    { params }
-  );
+  const response = await axiosClient.get("/products", { params });
 
   return response.data;
 };
-
-
-// =========================================================
-// GET PRODUCT BY ID
-// =========================================================
 
 export const getProductById = async (id) => {
-  const response = await axiosClient.get(
-    `/products/${id}`
-  );
+  const response = await axiosClient.get(`/products/${id}`);
 
   return response.data;
 };
-
-
-// =========================================================
-// SEARCH PRODUCTS
-// =========================================================
 
 export const searchProducts = async (
   keyword,
@@ -74,61 +51,68 @@ export const searchProducts = async (
     params.brandId = brandId;
   }
 
-  const response = await axiosClient.get(
-    "/products/search",
-    { params }
-  );
+  const response = await axiosClient.get("/products/search", {
+    params,
+  });
 
   return response.data;
 };
-
-
-// =========================================================
-// GET CATEGORIES
-// =========================================================
 
 export const getCategories = async () => {
-  const response = await axiosClient.get(
-    "/categories"
-  );
+  const response = await axiosClient.get("/categories");
 
   return response.data;
 };
-
-
-// =========================================================
-// GET BRANDS
-// =========================================================
 
 export const getBrands = async (
   page = 0,
   size = 100,
   sort = "name,asc"
 ) => {
+  const response = await axiosClient.get("/brands", {
+    params: {
+      page,
+      size,
+      sort,
+    },
+  });
+
+  return response.data;
+};
+
+export const getProductMedia = async (productId) => {
   const response = await axiosClient.get(
-    "/brands",
-    {
-      params: {
-        page,
-        size,
-        sort,
-      },
-    }
+    `/products/${productId}/media`
   );
 
   return response.data;
 };
 
-
 // =========================================================
-// GET PRODUCT MEDIA
+// PRODUCT MANAGEMENT
 // =========================================================
 
-export const getProductMedia = async (
-  productId
-) => {
-  const response = await axiosClient.get(
-    `/products/${productId}/media`
+export const createProduct = async (data) => {
+  const response = await axiosClient.post(
+    "/products",
+    data
+  );
+
+  return response.data;
+};
+
+export const updateProduct = async (id, data) => {
+  const response = await axiosClient.put(
+    `/products/${id}`,
+    data
+  );
+
+  return response.data;
+};
+
+export const deleteProduct = async (id) => {
+  const response = await axiosClient.delete(
+    `/products/${id}`
   );
 
   return response.data;

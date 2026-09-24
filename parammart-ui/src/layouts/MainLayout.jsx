@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 
@@ -18,14 +19,18 @@ import FavoriteRoundedIcon from "@mui/icons-material/FavoriteRounded";
 import ShoppingCartRoundedIcon from "@mui/icons-material/ShoppingCartRounded";
 import ReceiptLongRoundedIcon from "@mui/icons-material/ReceiptLongRounded";
 import PersonRoundedIcon from "@mui/icons-material/PersonRounded";
+import AdminPanelSettingsRoundedIcon from "@mui/icons-material/AdminPanelSettingsRounded";
 
 import AppHeader from "../components/common/AppHeader";
+import { useAuth } from "../context/AuthContext";
 
 const drawerWidth = 250;
 const headerHeight = 72;
 
 export default function MainLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const { hasPermission } = useAuth();
 
   const handleMenuClick = () => {
     setMobileOpen(true);
@@ -34,6 +39,23 @@ export default function MainLayout() {
   const handleDrawerClose = () => {
     setMobileOpen(false);
   };
+
+  /*
+   * ============================================================
+   * PERMISSIONS
+   * ============================================================
+   */
+
+  const canManageProducts =
+    hasPermission("PRODUCT_CREATE") ||
+    hasPermission("PRODUCT_UPDATE") ||
+    hasPermission("PRODUCT_DELETE");
+
+  /*
+   * ============================================================
+   * CUSTOMER NAVIGATION
+   * ============================================================
+   */
 
   const navigationItems = [
     {
@@ -67,6 +89,22 @@ export default function MainLayout() {
       icon: <PersonRoundedIcon />,
     },
   ];
+
+  /*
+   * ============================================================
+   * MANAGEMENT NAVIGATION
+   * ============================================================
+   */
+
+  const managementItems = [];
+
+  if (canManageProducts) {
+    managementItems.push({
+      label: "Product Management",
+      path: "/product-management",
+      icon: <AdminPanelSettingsRoundedIcon />,
+    });
+  }
 
   /*
    * ============================================================
@@ -121,6 +159,10 @@ export default function MainLayout() {
           overflowY: "auto",
         }}
       >
+        {/* ====================================================
+            CUSTOMER / GENERAL NAVIGATION
+        ==================================================== */}
+
         {navigationItems.map((item) => (
           <ListItemButton
             key={item.label}
@@ -171,6 +213,85 @@ export default function MainLayout() {
             />
           </ListItemButton>
         ))}
+
+        {/* ====================================================
+            MANAGEMENT SECTION
+        ==================================================== */}
+
+        {managementItems.length > 0 && (
+          <>
+            <Divider
+              sx={{
+                my: 2,
+              }}
+            />
+
+            <Typography
+              sx={{
+                px: 1.5,
+                mb: 1,
+                color: "#94A3B8",
+                fontSize: 11,
+                fontWeight: 800,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+              }}
+            >
+              Management
+            </Typography>
+
+            {managementItems.map((item) => (
+              <ListItemButton
+                key={item.label}
+                component={NavLink}
+                to={item.path}
+                onClick={handleDrawerClose}
+                sx={{
+                  borderRadius: 2.5,
+                  mb: 0.5,
+
+                  color: "#475569",
+                  textDecoration: "none",
+
+                  "& .MuiListItemIcon-root": {
+                    color: "#64748B",
+                  },
+
+                  "&:hover": {
+                    background: "#F8FAFC",
+                  },
+
+                  "&.active": {
+                    background:
+                      "linear-gradient(90deg,rgba(79,70,229,.12),rgba(6,182,212,.08))",
+
+                    color: "#4F46E5",
+
+                    "& .MuiListItemIcon-root": {
+                      color: "#4F46E5",
+                    },
+                  },
+                }}
+              >
+                <ListItemIcon
+                  sx={{
+                    minWidth: 42,
+                  }}
+                >
+                  {item.icon}
+                </ListItemIcon>
+
+                <ListItemText
+                  primary={item.label}
+                  primaryTypographyProps={{
+                    fontWeight: 700,
+                    fontSize: 14,
+                  }}
+                />
+              </ListItemButton>
+            ))}
+          </>
+        )}
       </List>
     </Box>
   );
@@ -292,14 +413,8 @@ export default function MainLayout() {
 
           background: "#F5F7FA",
 
-          /*
-           * Smooth scrolling
-           */
           scrollBehavior: "smooth",
 
-          /*
-           * Prevent horizontal scrollbar
-           */
           "&::-webkit-scrollbar": {
             width: 8,
           },

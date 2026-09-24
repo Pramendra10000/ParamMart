@@ -1,10 +1,13 @@
 import AppRoutes from "./routes/AppRoutes";
 import { CartProvider } from "./context/CartContext";
+import { AuthProvider } from "./context/AuthContext";
 
 export default function App() {
   return (
-    <CartProvider>
-      <AppRoutes />
-    </CartProvider>
+    <AuthProvider>
+      <CartProvider>
+        <AppRoutes />
+      </CartProvider>
+    </AuthProvider>
   );
 }

@@ -24,6 +24,7 @@ import OrderSuccess from "../pages/orders/OrderSuccess";
 
 import Orders from "../pages/orders/Orders";
 import OrderDetails from "../pages/orders/OrderDetails";
+import ProductManagement from "../pages/products/ProductManagement";
 
 function AppRoutes() {
   const { isAuthenticated } = useAuth();
@@ -84,6 +85,11 @@ function AppRoutes() {
             <Route
               path="/products/:id"
               element={<ProductDetails />}
+            />
+
+            <Route
+              path="/product-management"
+              element={<ProductManagement />}
             />
 
             <Route
