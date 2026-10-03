@@ -1,3 +1,4 @@
+
 import { useCallback, useEffect, useState } from "react";
 
 import {
@@ -47,31 +48,21 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 
-import ProductForm from "./ProductForm";
+import ProductForm from "../products/ProductForm";
+import ProductMediaDialog from "../products/ProductMediaDialog";
 
 export default function ProductManagement() {
-  const {
-    hasPermission,
-    hasRole,
-  } = useAuth();
+  const { hasPermission, hasRole } = useAuth();
 
-  const {
-    showSuccess,
-    showError,
-  } = useToast();
+  const { showSuccess, showError } = useToast();
 
   // =========================================================
   // PERMISSIONS
   // =========================================================
 
-  const canCreate =
-    hasPermission("PRODUCT_CREATE");
-
-  const canUpdate =
-    hasPermission("PRODUCT_UPDATE");
-
-  const canDelete =
-    hasPermission("PRODUCT_DELETE");
+  const canCreate = hasPermission("PRODUCT_CREATE");
+  const canUpdate = hasPermission("PRODUCT_UPDATE");
+  const canDelete = hasPermission("PRODUCT_DELETE");
 
   const isAdmin = hasRole("ADMIN");
 
@@ -80,9 +71,7 @@ export default function ProductManagement() {
   // =========================================================
 
   const [products, setProducts] = useState([]);
-
   const [loading, setLoading] = useState(true);
-
   const [error, setError] = useState("");
 
   // =========================================================
@@ -90,27 +79,18 @@ export default function ProductManagement() {
   // =========================================================
 
   const [keyword, setKeyword] = useState("");
-  const [searchKeyword, setSearchKeyword] =
-    useState("");
+  const [searchKeyword, setSearchKeyword] = useState("");
 
-  const [categoryId, setCategoryId] =
-    useState("");
-
-  const [brandId, setBrandId] =
-    useState("");
+  const [categoryId, setCategoryId] = useState("");
+  const [brandId, setBrandId] = useState("");
 
   // =========================================================
   // FILTER OPTIONS
   // =========================================================
 
-  const [categories, setCategories] =
-    useState([]);
-
-  const [brands, setBrands] =
-    useState([]);
-
-  const [filtersLoading, setFiltersLoading] =
-    useState(true);
+  const [categories, setCategories] = useState([]);
+  const [brands, setBrands] = useState([]);
+  const [filtersLoading, setFiltersLoading] = useState(true);
 
   // =========================================================
   // PAGINATION
@@ -119,37 +99,31 @@ export default function ProductManagement() {
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(10);
 
-  const [totalPages, setTotalPages] =
-    useState(0);
-
-  const [totalElements, setTotalElements] =
-    useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
 
   // =========================================================
-  // DIALOG
+  // ADD / EDIT DIALOG
   // =========================================================
 
-  const [formOpen, setFormOpen] =
-    useState(false);
-
-  const [editingProduct, setEditingProduct] =
-    useState(null);
-
-  const [submitting, setSubmitting] =
-    useState(false);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
   // =========================================================
   // DELETE DIALOG
   // =========================================================
 
-  const [deleteDialogOpen, setDeleteDialogOpen] =
-    useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
-  const [productToDelete, setProductToDelete] =
-    useState(null);
+  // =========================================================
+  // PRODUCT MEDIA DIALOG
+  // =========================================================
 
-  const [deleting, setDeleting] =
-    useState(false);
+  const [mediaDialogOpen, setMediaDialogOpen] = useState(false);
+  const [mediaProduct, setMediaProduct] = useState(null);
 
   // =========================================================
   // LOAD FILTERS
@@ -160,13 +134,11 @@ export default function ProductManagement() {
       try {
         setFiltersLoading(true);
 
-        const [
-          categoryResponse,
-          brandResponse,
-        ] = await Promise.all([
-          getCategories(),
-          getBrands(0, 100, "name,asc"),
-        ]);
+        const [categoryResponse, brandResponse] =
+          await Promise.all([
+            getCategories(),
+            getBrands(0, 100, "name,asc"),
+          ]);
 
         setCategories(
           Array.isArray(categoryResponse)
@@ -180,10 +152,7 @@ export default function ProductManagement() {
             : brandResponse?.content ?? []
         );
       } catch (err) {
-        console.error(
-          "Failed to load filters:",
-          err
-        );
+        console.error("Failed to load filters:", err);
 
         setError(
           err.response?.data?.message ||
@@ -201,63 +170,48 @@ export default function ProductManagement() {
   // LOAD PRODUCTS
   // =========================================================
 
-  const loadProducts = useCallback(
-    async () => {
-      try {
-        setLoading(true);
-        setError("");
+  const loadProducts = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError("");
 
-        const response =
-          searchKeyword.trim()
-            ? await searchProducts(
-                searchKeyword.trim(),
-                page,
-                size,
-                "id,desc",
-                categoryId,
-                brandId
-              )
-            : await getProducts(
-                page,
-                size,
-                "id,desc",
-                categoryId,
-                brandId
-              );
+      const response = searchKeyword.trim()
+        ? await searchProducts(
+            searchKeyword.trim(),
+            page,
+            size,
+            "id,desc",
+            categoryId,
+            brandId
+          )
+        : await getProducts(
+            page,
+            size,
+            "id,desc",
+            categoryId,
+            brandId
+          );
 
-        setProducts(
-          response?.content ?? []
-        );
+      setProducts(response?.content ?? []);
+      setTotalPages(response?.totalPages ?? 0);
+      setTotalElements(response?.totalElements ?? 0);
+    } catch (err) {
+      console.error("Failed to load products:", err);
 
-        setTotalPages(
-          response?.totalPages ?? 0
-        );
-
-        setTotalElements(
-          response?.totalElements ?? 0
-        );
-      } catch (err) {
-        console.error(
-          "Failed to load products:",
-          err
-        );
-
-        setError(
-          err.response?.data?.message ||
-            "Failed to load products."
-        );
-      } finally {
-        setLoading(false);
-      }
-    },
-    [
-      searchKeyword,
-      page,
-      size,
-      categoryId,
-      brandId,
-    ]
-  );
+      setError(
+        err.response?.data?.message ||
+          "Failed to load products."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [
+    searchKeyword,
+    page,
+    size,
+    categoryId,
+    brandId,
+  ]);
 
   useEffect(() => {
     loadProducts();
@@ -317,6 +271,25 @@ export default function ProductManagement() {
   };
 
   // =========================================================
+  // MANAGE PRODUCT IMAGES
+  // =========================================================
+
+  const handleManageImages = (product) => {
+    if (!product?.id) {
+      showError("Product information is missing.");
+      return;
+    }
+
+    setMediaProduct(product);
+    setMediaDialogOpen(true);
+  };
+
+  const handleCloseMediaDialog = () => {
+    setMediaDialogOpen(false);
+    setMediaProduct(null);
+  };
+
+  // =========================================================
   // CLOSE FORM
   // =========================================================
 
@@ -333,9 +306,7 @@ export default function ProductManagement() {
   // CREATE / UPDATE
   // =========================================================
 
-  const handleSubmitProduct = async (
-    payload
-  ) => {
+  const handleSubmitProduct = async (payload) => {
     try {
       setSubmitting(true);
 
@@ -359,11 +330,6 @@ export default function ProductManagement() {
       setFormOpen(false);
       setEditingProduct(null);
 
-      /*
-       * Go back to first page after creation
-       * so the user can immediately see the
-       * newest product when sorting by id desc.
-       */
       if (!editingProduct) {
         setPage(0);
       }
@@ -414,9 +380,7 @@ export default function ProductManagement() {
     try {
       setDeleting(true);
 
-      await deleteProduct(
-        productToDelete.id
-      );
+      await deleteProduct(productToDelete.id);
 
       showSuccess(
         "Product deleted successfully."
@@ -425,17 +389,11 @@ export default function ProductManagement() {
       setDeleteDialogOpen(false);
       setProductToDelete(null);
 
-      /*
-       * If the last product on a page was deleted,
-       * move back one page when necessary.
-       */
       if (
         products.length === 1 &&
         page > 0
       ) {
-        setPage((previous) =>
-          previous - 1
-        );
+        setPage((previous) => previous - 1);
       } else {
         await loadProducts();
       }
@@ -459,10 +417,7 @@ export default function ProductManagement() {
   // PAGINATION
   // =========================================================
 
-  const handlePageChange = (
-    _event,
-    newPage
-  ) => {
+  const handlePageChange = (_event, newPage) => {
     setPage(newPage - 1);
   };
 
@@ -479,8 +434,7 @@ export default function ProductManagement() {
     return (
       categories.find(
         (category) =>
-          Number(category.id) ===
-          Number(id)
+          Number(category.id) === Number(id)
       )?.name || "-"
     );
   };
@@ -489,8 +443,7 @@ export default function ProductManagement() {
     return (
       brands.find(
         (brand) =>
-          Number(brand.id) ===
-          Number(id)
+          Number(brand.id) === Number(id)
       )?.name || "-"
     );
   };
@@ -562,12 +515,8 @@ export default function ProductManagement() {
           {canCreate && (
             <Button
               variant="contained"
-              startIcon={
-                <AddRoundedIcon />
-              }
-              onClick={
-                handleAddProduct
-              }
+              startIcon={<AddRoundedIcon />}
+              onClick={handleAddProduct}
               sx={{
                 minWidth: 160,
                 borderRadius: 2.5,
@@ -714,13 +663,9 @@ export default function ProductManagement() {
                 placeholder="Search products..."
                 value={keyword}
                 onChange={(event) =>
-                  setKeyword(
-                    event.target.value
-                  )
+                  setKeyword(event.target.value)
                 }
-                onKeyDown={
-                  handleSearchKeyDown
-                }
+                onKeyDown={handleSearchKeyDown}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -734,9 +679,7 @@ export default function ProductManagement() {
                 select
                 label="Category"
                 value={categoryId}
-                onChange={
-                  handleCategoryChange
-                }
+                onChange={handleCategoryChange}
                 disabled={filtersLoading}
                 sx={{
                   minWidth: {
@@ -749,25 +692,21 @@ export default function ProductManagement() {
                   All Categories
                 </MenuItem>
 
-                {categories.map(
-                  (category) => (
-                    <MenuItem
-                      key={category.id}
-                      value={category.id}
-                    >
-                      {category.name}
-                    </MenuItem>
-                  )
-                )}
+                {categories.map((category) => (
+                  <MenuItem
+                    key={category.id}
+                    value={category.id}
+                  >
+                    {category.name}
+                  </MenuItem>
+                ))}
               </TextField>
 
               <TextField
                 select
                 label="Brand"
                 value={brandId}
-                onChange={
-                  handleBrandChange
-                }
+                onChange={handleBrandChange}
                 disabled={filtersLoading}
                 sx={{
                   minWidth: {
@@ -792,9 +731,7 @@ export default function ProductManagement() {
 
               <Button
                 variant="contained"
-                onClick={
-                  handleSearch
-                }
+                onClick={handleSearch}
                 sx={{
                   minWidth: 120,
                   borderRadius: 2.5,
@@ -804,13 +741,10 @@ export default function ProductManagement() {
                 Search
               </Button>
 
-              {(keyword ||
-                searchKeyword) && (
+              {(keyword || searchKeyword) && (
                 <Button
                   variant="outlined"
-                  onClick={
-                    handleClearSearch
-                  }
+                  onClick={handleClearSearch}
                   sx={{
                     minWidth: 110,
                     borderRadius: 2.5,
@@ -892,70 +826,53 @@ export default function ProductManagement() {
                 <TableHead>
                   <TableRow
                     sx={{
-                      background:
-                        "#F8FAFC",
+                      background: "#F8FAFC",
                     }}
                   >
                     <TableCell>
-                      <Typography
-                        fontWeight={800}
-                      >
+                      <Typography fontWeight={800}>
                         Product
                       </Typography>
                     </TableCell>
 
                     <TableCell>
-                      <Typography
-                        fontWeight={800}
-                      >
+                      <Typography fontWeight={800}>
                         SKU
                       </Typography>
                     </TableCell>
 
                     <TableCell>
-                      <Typography
-                        fontWeight={800}
-                      >
+                      <Typography fontWeight={800}>
                         Category
                       </Typography>
                     </TableCell>
 
                     <TableCell>
-                      <Typography
-                        fontWeight={800}
-                      >
+                      <Typography fontWeight={800}>
                         Brand
                       </Typography>
                     </TableCell>
 
                     <TableCell>
-                      <Typography
-                        fontWeight={800}
-                      >
+                      <Typography fontWeight={800}>
                         Price
                       </Typography>
                     </TableCell>
 
                     <TableCell>
-                      <Typography
-                        fontWeight={800}
-                      >
+                      <Typography fontWeight={800}>
                         Stock
                       </Typography>
                     </TableCell>
 
                     <TableCell>
-                      <Typography
-                        fontWeight={800}
-                      >
+                      <Typography fontWeight={800}>
                         Status
                       </Typography>
                     </TableCell>
 
                     <TableCell align="right">
-                      <Typography
-                        fontWeight={800}
-                      >
+                      <Typography fontWeight={800}>
                         Actions
                       </Typography>
                     </TableCell>
@@ -963,128 +880,137 @@ export default function ProductManagement() {
                 </TableHead>
 
                 <TableBody>
-                  {products.map(
-                    (product) => (
-                      <TableRow
-                        key={product.id}
-                        hover
-                      >
-                        <TableCell>
-                          <Typography
-                            fontWeight={800}
-                            sx={{
-                              maxWidth: 220,
-                            }}
-                          >
-                            {product.name}
-                          </Typography>
+                  {products.map((product) => (
+                    <TableRow
+                      key={product.id}
+                      hover
+                    >
+                      <TableCell>
+                        <Typography
+                          fontWeight={800}
+                          sx={{
+                            maxWidth: 220,
+                          }}
+                        >
+                          {product.name}
+                        </Typography>
 
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                          >
-                            ID: {product.id}
-                          </Typography>
-                        </TableCell>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                        >
+                          ID: {product.id}
+                        </Typography>
+                      </TableCell>
 
-                        <TableCell>
-                          <Typography
-                            variant="body2"
-                            fontWeight={600}
-                          >
-                            {product.sku}
-                          </Typography>
-                        </TableCell>
+                      <TableCell>
+                        <Typography
+                          variant="body2"
+                          fontWeight={600}
+                        >
+                          {product.sku}
+                        </Typography>
+                      </TableCell>
 
-                        <TableCell>
-                          {product.categoryName ||
-                            getCategoryName(
-                              product.categoryId
-                            )}
-                        </TableCell>
+                      <TableCell>
+                        {product.categoryName ||
+                          getCategoryName(
+                            product.categoryId
+                          )}
+                      </TableCell>
 
-                        <TableCell>
-                          {product.brandName ||
-                            getBrandName(
-                              product.brandId
-                            )}
-                        </TableCell>
+                      <TableCell>
+                        {product.brandName ||
+                          getBrandName(
+                            product.brandId
+                          )}
+                      </TableCell>
 
-                        <TableCell>
-                          <Typography
-                            fontWeight={800}
-                          >
-                            ₹
-                            {Number(
-                              product.price
-                            ).toLocaleString(
-                              "en-IN"
-                            )}
-                          </Typography>
-                        </TableCell>
+                      <TableCell>
+                        <Typography fontWeight={800}>
+                          ₹
+                          {Number(
+                            product.price
+                          ).toLocaleString("en-IN")}
+                        </Typography>
+                      </TableCell>
 
-                        <TableCell>
-                          <Typography
-                            fontWeight={700}
-                          >
-                            {product.stock ??
-                              0}
-                          </Typography>
-                        </TableCell>
+                      <TableCell>
+                        <Typography fontWeight={700}>
+                          {product.stock ?? 0}
+                        </Typography>
+                      </TableCell>
 
-                        <TableCell>
-                          <Chip
-                            size="small"
-                            label={
-                              product.active
-                                ? "Active"
-                                : "Inactive"
-                            }
-                            sx={{
-                              fontWeight: 800,
-                            }}
-                          />
-                        </TableCell>
+                      <TableCell>
+                        <Chip
+                          size="small"
+                          label={
+                            product.active
+                              ? "Active"
+                              : "Inactive"
+                          }
+                          sx={{
+                            fontWeight: 800,
+                          }}
+                        />
+                      </TableCell>
 
-                        <TableCell align="right">
-                          <Stack
-                            direction="row"
-                            justifyContent="flex-end"
-                            spacing={0.5}
-                          >
-                            {canUpdate && (
-                              <Tooltip title="Edit Product">
-                                <IconButton
-                                  onClick={() =>
-                                    handleEditProduct(
-                                      product
-                                    )
-                                  }
-                                >
-                                  <EditRoundedIcon />
-                                </IconButton>
-                              </Tooltip>
-                            )}
+                      {/* ACTIONS */}
+                      <TableCell align="right">
+                        <Stack
+                          direction="row"
+                          justifyContent="flex-end"
+                          spacing={0.5}
+                        >
+                          {/* MANAGE IMAGES */}
+                          {canUpdate && (
+                            <Tooltip title="Manage Images">
+                              <IconButton
+                                onClick={() =>
+                                  handleManageImages(
+                                    product
+                                  )
+                                }
+                              >
+                                <Inventory2RoundedIcon />
+                              </IconButton>
+                            </Tooltip>
+                          )}
 
-                            {canDelete && (
-                              <Tooltip title="Delete Product">
-                                <IconButton
-                                  color="error"
-                                  onClick={() =>
-                                    handleDeleteClick(
-                                      product
-                                    )
-                                  }
-                                >
-                                  <DeleteOutlineRoundedIcon />
-                                </IconButton>
-                              </Tooltip>
-                            )}
-                          </Stack>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  )}
+                          {/* EDIT */}
+                          {canUpdate && (
+                            <Tooltip title="Edit Product">
+                              <IconButton
+                                onClick={() =>
+                                  handleEditProduct(
+                                    product
+                                  )
+                                }
+                              >
+                                <EditRoundedIcon />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+
+                          {/* DELETE */}
+                          {canDelete && (
+                            <Tooltip title="Delete Product">
+                              <IconButton
+                                color="error"
+                                onClick={() =>
+                                  handleDeleteClick(
+                                    product
+                                  )
+                                }
+                              >
+                                <DeleteOutlineRoundedIcon />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             </TableContainer>
@@ -1094,79 +1020,60 @@ export default function ProductManagement() {
               PAGINATION
           ================================================= */}
 
-          {!loading &&
-            products.length > 0 && (
-              <Box
+          {!loading && products.length > 0 && (
+            <Box
+              sx={{
+                px: 2.5,
+                py: 2,
+                borderTop: "1px solid",
+                borderColor: "divider",
+                display: "flex",
+                alignItems: {
+                  xs: "flex-start",
+                  sm: "center",
+                },
+                justifyContent: "space-between",
+                flexDirection: {
+                  xs: "column",
+                  sm: "row",
+                },
+                gap: 2,
+              }}
+            >
+              <TextField
+                select
+                size="small"
+                label="Rows"
+                value={size}
+                onChange={handleSizeChange}
                 sx={{
-                  px: 2.5,
-                  py: 2,
-                  borderTop:
-                    "1px solid",
-                  borderColor:
-                    "divider",
-                  display: "flex",
-                  alignItems: {
-                    xs: "flex-start",
-                    sm: "center",
-                  },
-                  justifyContent:
-                    "space-between",
-                  flexDirection: {
-                    xs: "column",
-                    sm: "row",
-                  },
-                  gap: 2,
+                  width: 110,
                 }}
               >
-                <TextField
-                  select
-                  size="small"
-                  label="Rows"
-                  value={size}
-                  onChange={
-                    handleSizeChange
-                  }
-                  sx={{
-                    width: 110,
-                  }}
-                >
-                  <MenuItem value={10}>
-                    10
-                  </MenuItem>
+                <MenuItem value={10}>10</MenuItem>
+                <MenuItem value={20}>20</MenuItem>
+                <MenuItem value={40}>40</MenuItem>
+              </TextField>
 
-                  <MenuItem value={20}>
-                    20
-                  </MenuItem>
+              {totalPages > 1 && (
+                <Pagination
+                  count={totalPages}
+                  page={page + 1}
+                  onChange={handlePageChange}
+                  color="primary"
+                  shape="rounded"
+                />
+              )}
 
-                  <MenuItem value={40}>
-                    40
-                  </MenuItem>
-                </TextField>
-
-                {totalPages > 1 && (
-                  <Pagination
-                    count={totalPages}
-                    page={page + 1}
-                    onChange={
-                      handlePageChange
-                    }
-                    color="primary"
-                    shape="rounded"
-                  />
-                )}
-
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                >
-                  Page {page + 1} of{" "}
-                  {Math.max(
-                    totalPages,
-                    1
-                  )}
-                </Typography>
-              </Box>
-            )}
+              <Typography
+                variant="body2"
+                color="text.secondary"
+              >
+                Page {page + 1} of{" "}
+                {Math.max(totalPages, 1)}
+              </Typography>
+            </Box>
+          )}
         </Card>
       </Container>
 
@@ -1176,9 +1083,7 @@ export default function ProductManagement() {
 
       <Dialog
         open={formOpen}
-        onClose={
-          handleCloseForm
-        }
+        onClose={handleCloseForm}
         fullWidth
         maxWidth="md"
       >
@@ -1186,8 +1091,7 @@ export default function ProductManagement() {
           sx={{
             display: "flex",
             alignItems: "center",
-            justifyContent:
-              "space-between",
+            justifyContent: "space-between",
             fontWeight: 900,
           }}
         >
@@ -1196,9 +1100,7 @@ export default function ProductManagement() {
             : "Add Product"}
 
           <IconButton
-            onClick={
-              handleCloseForm
-            }
+            onClick={handleCloseForm}
             disabled={submitting}
           >
             <CloseRoundedIcon />
@@ -1208,15 +1110,21 @@ export default function ProductManagement() {
         <ProductForm
           open={formOpen}
           product={editingProduct}
-          onClose={
-            handleCloseForm
-          }
-          onSubmit={
-            handleSubmitProduct
-          }
+          onClose={handleCloseForm}
+          onSubmit={handleSubmitProduct}
           submitting={submitting}
         />
       </Dialog>
+
+      {/* =====================================================
+          PRODUCT MEDIA DIALOG
+      ===================================================== */}
+
+      <ProductMediaDialog
+        open={mediaDialogOpen}
+        product={mediaProduct}
+        onClose={handleCloseMediaDialog}
+      />
 
       {/* =====================================================
           DELETE CONFIRMATION
@@ -1224,9 +1132,7 @@ export default function ProductManagement() {
 
       <Dialog
         open={deleteDialogOpen}
-        onClose={
-          handleCloseDeleteDialog
-        }
+        onClose={handleCloseDeleteDialog}
         fullWidth
         maxWidth="xs"
       >
@@ -1244,11 +1150,8 @@ export default function ProductManagement() {
             pb: 2,
           }}
         >
-          <Typography
-            color="text.secondary"
-          >
-            Are you sure you want to
-            delete{" "}
+          <Typography color="text.secondary">
+            Are you sure you want to delete{" "}
             <strong>
               {productToDelete?.name}
             </strong>
@@ -1260,8 +1163,7 @@ export default function ProductManagement() {
             color="error"
             sx={{ mt: 1.5 }}
           >
-            This action cannot be
-            undone.
+            This action cannot be undone.
           </Typography>
         </Box>
 
@@ -1276,9 +1178,7 @@ export default function ProductManagement() {
         >
           <Button
             variant="outlined"
-            onClick={
-              handleCloseDeleteDialog
-            }
+            onClick={handleCloseDeleteDialog}
             disabled={deleting}
           >
             Cancel
@@ -1287,9 +1187,7 @@ export default function ProductManagement() {
           <Button
             variant="contained"
             color="error"
-            onClick={
-              handleConfirmDelete
-            }
+            onClick={handleConfirmDelete}
             disabled={deleting}
           >
             {deleting ? (
